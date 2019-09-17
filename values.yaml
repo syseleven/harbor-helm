@@ -20,6 +20,10 @@ expose:
     # described above. Fill the name of secret if you want to use a 
     # separated one. Only needed when the type is "ingress".
     notarySecretName: ""
+    # You can also specify that you want no secret in the ingress's TLS section.
+    # This is useful for setups where the ingress controller already provides
+    # a TLS secret for multiple or all ingresses in the cluster.
+    nosecret: false
     # The common name used to generate the certificate, it's necessary
     # when the type isn't "ingress" and "secretName" is null
     commonName: ""
