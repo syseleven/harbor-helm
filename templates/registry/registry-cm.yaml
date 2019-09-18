@@ -148,6 +148,8 @@ data:
       # secret: placeholder
       debug:
         addr: localhost:5001
+        prometheus:
+          enabled: true
     auth:
       token:
         issuer: harbor-token-issuer
