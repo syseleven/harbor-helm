@@ -8,6 +8,8 @@ spec:
   ports:
     - name: registry
       port: 5000
+    - name: registry-debug-prom
+      port: 5001
     - name: controller
       port: 8080
   selector:
