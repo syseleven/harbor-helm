@@ -146,8 +146,9 @@ data:
       addr: :5000
       # set via environment variable
       # secret: placeholder
+      # SysEleven block to enable prometheus
       debug:
-        addr: localhost:5001
+        addr: :5001
         prometheus:
           enabled: true
     auth:
