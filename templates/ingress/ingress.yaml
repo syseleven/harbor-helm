@@ -34,7 +34,7 @@ metadata:
 spec:
   {{- if $tls.enabled }}
   tls:
-    {{- if $tls.nosecret }}
+    {{- if $ingress.nosecret }}
     {{- if $ingress.hosts.core }}
   - hosts:
     - {{ $ingress.hosts.core }}
@@ -51,7 +51,7 @@ spec:
     {{- end }}
     {{- end }}
   {{- if .Values.notary.enabled }}
-    {{- if $tls.notaryNoSecret }}
+    {{- if $ingress.notaryNoSecret }}
     {{- if $ingress.hosts.notary }}
   - hosts:
     - {{ $ingress.hosts.notary }}
