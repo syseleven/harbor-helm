@@ -5,6 +5,7 @@ metadata:
   name: "{{ template "harbor.chartmuseum" . }}"
   labels:
 {{ include "harbor.labels" . | indent 4 }}
+    service: chartmuseum
 spec:
   ports:
     - port: 80
