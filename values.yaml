@@ -350,6 +350,9 @@ jobservice:
   # If a secret key is not specified, Helm will generate one.
   # Must be a string of 16 chars.
   secret: ""
+  # idle time in seconds after which the job service will close open
+  # Redis connections
+  idle_timeout_second: 300
 
 registry:
   registry:

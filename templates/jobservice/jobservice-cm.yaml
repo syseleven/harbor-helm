@@ -14,6 +14,9 @@ data:
       redis_pool:
         redis_url: "{{ template "harbor.redisForJobservice" . }}"
         namespace: "harbor_job_service_namespace"
+      {{- if .Values.jobservice.idle_timeout_second }}
+        idle_timeout_second: {{ .Values.jobservice.idle_timeout_second }}
+      {{- end }}
     job_loggers:
       {{- if eq .Values.jobservice.jobLogger "file" }}
       - name: "FILE"
