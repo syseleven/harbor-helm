@@ -56,3 +56,6 @@ data:
   HTTPS_PROXY: "{{ .Values.proxy.httpsProxy }}"
   NO_PROXY: "{{ template "harbor.noProxy" . }}"
   {{- end }}
+  {{- if .Values.frontChannelLogoutURL }}
+  FRONT_CHANNEL_LOGOUT_URL: {{ .Values.frontChannelLogoutURL }}
+  {{- end }}
