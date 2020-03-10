@@ -62,6 +62,9 @@ spec:
               secretKeyRef:
                 name: "{{ template "harbor.jobservice" . }}"
                 key: secret
+{{- if .Values.core.extraEnvs }}
+{{ toYaml .Values.core.extraEnvs | indent 10 }}
+{{- end }}
         ports:
         - containerPort: 8080
         volumeMounts:
