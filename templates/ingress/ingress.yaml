@@ -106,6 +106,12 @@ metadata:
 spec:
   {{- if $tls.enabled }}
   tls:
+    {{- if $ingress.notaryNoSecret }}
+    {{- if $ingress.hosts.notary }}
+  - hosts:
+    - {{ $ingress.hosts.notary }}
+    {{- end }}
+    {{- else }}
     {{- if $tls.notarySecretName }}
   - secretName: {{ $tls.notarySecretName }}
     {{- else if $tls.secretName }}
@@ -116,6 +122,7 @@ spec:
     {{- if $ingress.hosts.notary }}
     hosts:
     - {{ $ingress.hosts.notary }}
+    {{- end }}
     {{- end }}
   {{- end }}
   {{- if eq .Values.expose.ingress.controller "ncp" }}
