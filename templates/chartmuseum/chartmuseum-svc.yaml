@@ -8,8 +8,8 @@ metadata:
     service: chartmuseum
 spec:
   ports:
-    - port: 80
-      targetPort: 9999
+    - port: {{ template "harbor.chartmuseum.servicePort" . }}
+      targetPort: {{ template "harbor.chartmuseum.containerPort" . }}
   selector:
 {{ include "harbor.matchLabels" . | indent 4 }}
     component: chartmuseum
