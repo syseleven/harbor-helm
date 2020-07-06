@@ -56,6 +56,7 @@ spec:
     - {{ $ingress.hosts.core }}
     {{- end }}
   {{- end }}
+  {{- end -}}
   {{- if eq .Values.expose.ingress.controller "ncp" }}
   backend:
     serviceName: {{ template "harbor.portal" . }}
