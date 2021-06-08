@@ -10,8 +10,8 @@ This [Helm](https://github.com/kubernetes/helm) chart installs [Harbor](https://
 
 ## Prerequisites
 
-- Kubernetes cluster 1.10+
-- Helm 2.8.0+
+- Kubernetes cluster 1.16+
+- Helm 2.10.0+
 
 ## Installation
 
@@ -55,15 +55,6 @@ If Harbor is deployed behind the proxy, set it as the URL of proxy.
 - **Persistent Volume Claim(default)**: A default `StorageClass` is needed in the Kubernetes cluster to dynamic provision the volumes. Specify another StorageClass in the `storageClass` or set `existingClaim` if you have already existing persistent volumes to use.
 - **External Storage(only for images and charts)**: For images and charts, the external storages are supported: `azure`, `gcs`, `s3` `swift` and `oss`.
 
-#### Configure the secrets
-
-- **Secret keys**: Secret keys are used for secure communication between components. Fill `core.secret`, `jobservice.secret` and `registry.secret` to configure.
-- **Certificates**:
-  - *notary*: Used for authentication during communications. Fill `notary.secretName` to configure. Notary server certificate must be issued with notary service name as subject alternative name.
-  - *core*: Used for token encryption/decryption. Fill `core.secretName` to configure.
-
-Secrets and certificates must be setup to avoid changes on every Helm upgrade (see: [#107](https://github.com/goharbor/harbor-helm/issues/107)).
-
 #### Configure the other items listed in [configuration](#configuration) section
 
 ### Install the chart
@@ -98,27 +89,28 @@ The following table lists the configurable parameters of the Harbor chart and th
 
 | Parameter                                                                   | Description                                                                                                                                                                                                                                                                                                                                     | Default                         |
 | --------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------- |
-| **Expose**                                                                  |
-| `expose.type`                                                               | The way how to expose the service: `ingress`, `clusterIP`, `nodePort` or `loadBalancer`, other values will be ignored and the creation of service will be skipped.                                                                                                                                                                                                                                                                         | `ingress`                       |
-| `expose.tls.enabled`                                                        | Enable the tls or not                                                                                                                                                                                                                                                                                                                           | `true`                          |
+| **Expose** |
+| `expose.type` | The way how to expose the service: `ingress`, `clusterIP`, `nodePort` or `loadBalancer`, other values will be ignored and the creation of service will be skipped. | `ingress` |
+| `expose.tls.enabled` | Enable the tls or not | `true` |
+| `expose.tls.certSource` | The source of the tls certificate. Set it as `auto`, `secret` or `none` and fill the information in the corresponding section: 1) auto: generate the tls certificate automatically 2) secret: read the tls certificate from the specified secret. The tls certificate can be generated manually or by cert manager 3) none: configure no tls certificate for the ingress. If the default tls certificate is configured in the ingress controller, choose this option | `auto` |
+| `expose.tls.auto.commonName` | The common name used to generate the certificate, it's necessary when the type isn't `ingress` | |
+| `expose.tls.secret.secretName` | The name of secret which contains keys named: `tls.crt` - the certificate; `tls.key` - the private key | |
+| `expose.tls.secret.notarySecretName` | The name of secret which contains keys named: `tls.crt` - the certificate; `tls.key` - the private key. Only needed when the `expose.type` is `ingress` | |
+| `expose.ingress.hosts.core` | The host of Harbor core service in ingress rule | `core.harbor.domain` |
+| `expose.ingress.hosts.notary` | The host of Harbor Notary service in ingress rule | `notary.harbor.domain` |
 | `expose.ingress.controller` | The ingress controller type. Currently supports `default`, `gce` and `ncp` | `default` |
-| `expose.tls.secretName` | Fill the name of secret if you want to use your own TLS certificate. The secret contains keys named: `tls.crt` - the certificate (required), `tls.key` - the private key (required), `ca.crt` - the certificate of CA (optional), this enables the download link on portal to download the certificate of CA. These files will be generated automatically if the `secretName` is not set | |
-| `expose.tls.notarySecretName`                                               | By default, the Notary service will use the same cert and key as described above. Fill the name of secret if you want to use a separated one. Only needed when the `expose.type` is `ingress`.                                                                                                                                                  |                                 |
-| `expose.tls.commonName`                                                     | The common name used to generate the certificate, it's necessary when the `expose.type` is `clusterIP` or `nodePort` and `expose.tls.secretName` is null                                                                                                                                                                                        |                                 |
-| `expose.ingress.hosts.core`                                                 | The host of Harbor core service in ingress rule                                                                                                                                                                                                                                                                                                 | `core.harbor.domain`            |
-| `expose.ingress.hosts.notary`                                               | The host of Harbor Notary service in ingress rule                                                                                                                                                                                                                                                                                               | `notary.harbor.domain`          |
-| `expose.ingress.annotations`                                                | The annotations used in ingress                                                                                                                                                                                                                                                                                                                 |                                 |
-| `expose.clusterIP.name`                                                     | The name of ClusterIP service                                                                                                                                                                                                                                                                                                                   | `harbor`                        |
-| `expose.clusterIP.ports.httpPort`                                           | The service port Harbor listens on when serving with HTTP                                                                                                                                                                                                                                                                                       | `80`                            |
-| `expose.clusterIP.ports.httpsPort`                                          | The service port Harbor listens on when serving with HTTPS                                                                                                                                                                                                                                                                                      | `443`                           |
-| `expose.clusterIP.ports.notaryPort`                                         | The service port Notary listens on. Only needed when `notary.enabled` is set to `true`                                                                                                                                                                                                                                                          | `4443`                          |
-| `expose.nodePort.name`                                                      | The name of NodePort service                                                                                                                                                                                                                                                                                                                    | `harbor`                        |
-| `expose.nodePort.ports.http.port`                                           | The service port Harbor listens on when serving with HTTP                                                                                                                                                                                                                                                                                       | `80`                            |
-| `expose.nodePort.ports.http.nodePort`                                       | The node port Harbor listens on when serving with HTTP                                                                                                                                                                                                                                                                                          | `30002`                         |
-| `expose.nodePort.ports.https.port`                                          | The service port Harbor listens on when serving with HTTPS                                                                                                                                                                                                                                                                                      | `443`                           |
-| `expose.nodePort.ports.https.nodePort`                                      | The node port Harbor listens on when serving with HTTPS                                                                                                                                                                                                                                                                                         | `30003`                         |
-| `expose.nodePort.ports.notary.port`                                         | The service port Notary listens on. Only needed when `notary.enabled` is set to `true`                                                                                                                                                                                                                                                          | `4443`                          |
-| `expose.nodePort.ports.notary.nodePort`                                     | The node port Notary listens on. Only needed when `notary.enabled` is set to `true`                                                                                                                                                                                                                                                             | `30004`                         |
+| `expose.ingress.annotations` | The annotations used in ingress |  |
+| `expose.clusterIP.name` | The name of ClusterIP service | `harbor` |
+| `expose.clusterIP.ports.httpPort` | The service port Harbor listens on when serving with HTTP | `80` |
+| `expose.clusterIP.ports.httpsPort` | The service port Harbor listens on when serving with HTTPS | `443` |
+| `expose.clusterIP.ports.notaryPort` | The service port Notary listens on. Only needed when `notary.enabled` is set to `true` | `4443` |
+| `expose.nodePort.name` | The name of NodePort service | `harbor` |
+| `expose.nodePort.ports.http.port` | The service port Harbor listens on when serving with HTTP | `80` |
+| `expose.nodePort.ports.http.nodePort` | The node port Harbor listens on when serving with HTTP | `30002` |
+| `expose.nodePort.ports.https.port` | The service port Harbor listens on when serving with HTTPS | `443` |
+| `expose.nodePort.ports.https.nodePort` | The node port Harbor listens on when serving with HTTPS | `30003` |
+| `expose.nodePort.ports.notary.port` | The service port Notary listens on. Only needed when `notary.enabled` is set to `true` | `4443` |
+| `expose.nodePort.ports.notary.nodePort` | The node port Notary listens on. Only needed when `notary.enabled` is set to `true` | `30004` |
 | `expose.loadBalancer.name` | The name of service |`harbor`|
 | `expose.loadBalancer.IP` | The IP of the loadBalancer.  It works only when loadBalancer support assigning IP |`""`|
 | `expose.loadBalancer.ports.httpPort` | The service port Harbor listens on when serving with HTTP |`80`|
@@ -153,7 +145,7 @@ The following table lists the configurable parameters of the Harbor chart and th
 | `internalTLS.trivy.key` | Content of trivy's TLS key file, only available when `certSource` is `manual` | |
 | **Persistence**                                                             |
 | `persistence.enabled`                                                       | Enable the data persistence or not                                                                                                                                                                                                                                                                                                              | `true`                          |
-| `persistence.resourcePolicy`                                                | Setting it to `keep` to avoid removing PVCs during a helm delete operation. Leaving it empty will delete PVCs after the chart deleted                                                                                                                                                                                                           | `keep`                          |
+| `persistence.resourcePolicy`                                                | Setting it to `keep` to avoid removing PVCs during a helm delete operation. Leaving it empty will delete PVCs after the chart deleted. Does not affect PVCs created for internal database and redis components.                                                                                                                                 | `keep`                          |
 | `persistence.persistentVolumeClaim.registry.existingClaim`                  | Use the existing PVC which must be created manually before bound, and specify the `subPath` if the PVC is shared with other components                                                                                                                                                                                                                                                                                |                                 |
 | `persistence.persistentVolumeClaim.registry.storageClass`                   | Specify the `storageClass` used to provision the volume. Or the default StorageClass will be used(the default). Set it to `-` to disable dynamic provisioning                                                                                                                                                                                   |                                 |
 | `persistence.persistentVolumeClaim.registry.subPath`                        | The sub path used in the volume                                                                                                                                                                                                                                                                                                                 |                                 |
@@ -190,8 +182,9 @@ The following table lists the configurable parameters of the Harbor chart and th
 | `imagePullSecrets` | The imagePullSecrets names for all deployments |  |
 | `updateStrategy.type` | The update strategy for deployments with persistent volumes(jobservice, registry and chartmuseum): `RollingUpdate` or `Recreate`. Set it as `Recreate` when `RWM` for volumes isn't supported  | `RollingUpdate` |
 | `logLevel` | The log level: `debug`, `info`, `warning`, `error` or `fatal` | `info` |
-| `harborAdminPassword`                                                       | The initial password of Harbor admin. Change it from portal after launching Harbor                                                                                                                                                                                                                                                              | `Harbor12345`                   |
-| `secretkey`                                                                 | The key used for encryption. Must be a string of 16 chars                                                                                                                                                                                                                                                                                       | `not-a-secure-key`              |
+| `harborAdminPassword` | The initial password of Harbor admin. Change it from portal after launching Harbor | `Harbor12345` |
+| `caSecretName` | The name of the secret which contains key named `ca.crt`. Setting this enables the download link on portal to download the certificate of CA when the certificate isn't generated automatically | |
+| `secretkey` | The key used for encryption. Must be a string of 16 chars | `not-a-secure-key` |
 | `proxy.httpProxy` | The URL of the HTTP proxy server | |
 | `proxy.httpsProxy` | The URL of the HTTPS proxy server | |
 | `proxy.noProxy` | The URLs that the proxy settings not apply to | 127.0.0.1,localhost,.local,.internal |
@@ -218,7 +211,7 @@ The following table lists the configurable parameters of the Harbor chart and th
 | `core.image.repository` | Repository for Harbor core image | `goharbor/harbor-core` |
 | `core.image.tag` | Tag for Harbor core image | `v2.0.0` |
 | `core.replicas` | The replica count  | `1` |
-| `core.livenessProbe.initialDelaySeconds` | The initial delay in seconds for the liveness probe | `300` |
+| `core.startupProbe.initialDelaySeconds` | The initial delay in seconds for the startup probe | `10` |
 | `core.resources` | The [resources] to allocate for container | undefined |
 | `core.nodeSelector`  | Node labels for pod assignment | `{}` |
 | `core.tolerations` | Tolerations for pod assignment | `[]` |
@@ -312,9 +305,7 @@ The following table lists the configurable parameters of the Harbor chart and th
 | **Database** |
 | `database.type` | If external database is used, set it to `external` | `internal` |
 | `database.internal.image.repository` | Repository for database image | `goharbor/harbor-db` |
-| `database.internal.image.tag` | Tag for database image | `v2.0.0` |
-| `database.internal.initContainerImage.repository` | Repository for the init container image | `busybox` |
-| `database.internal.initContainerImage.tag` | Tag for the init container image | `latest` |
+| `database.internal.image.tag` | Tag for database image | `dev` |
 | `database.internal.password`                                                | The password for database                                                                                                                                                                                                                                                                                                                       | `changeit`                      |
 | `database.internal.resources`                                               | The [resources] to allocate for container                                                                                                                                                                                                                                                                                                       | undefined                       |
 | `database.internal.nodeSelector`                                            | Node labels for pod assignment                                                                                                                                                                                                                                                                                                                  | `{}`                            |
@@ -332,23 +323,24 @@ The following table lists the configurable parameters of the Harbor chart and th
 | `database.maxIdleConns` | The maximum number of connections in the idle connection pool. If it <=0, no idle connections are retained. | `50` |
 | `database.maxOpenConns` | The maximum number of open connections to the database. If it <= 0, then there is no limit on the number of open connections. | `100` |
 | `database.podAnnotations`                                                   | Annotations to add to the database pod                                                                                                                                                                                                                                                                                                          | `{}`                            |
-| **Redis**                                                                   |
-| `redis.type`                                                                | If external redis is used, set it to `external`                                                                                                                                                                                                                                                                                                 | `internal`                      |
-| `redis.internal.image.repository`                                           | Repository for redis image                                                                                                                                                                                                                                                                                                                      | `goharbor/redis-photon`         |
-| `redis.internal.image.tag`                                                  | Tag for redis image                                                                                                                                                                                                                                                                                                                             | `v2.0.0`                           |
-| `redis.internal.resources`                                                  | The [resources] to allocate for container                                                                                                                                                                                                                                                                                                       | undefined                       |
-| `redis.internal.nodeSelector`                                               | Node labels for pod assignment                                                                                                                                                                                                                                                                                                                  | `{}`                            |
-| `redis.internal.tolerations`                                                | Tolerations for pod assignment                                                                                                                                                                                                                                                                                                                  | `[]`                            |
-| `redis.internal.affinity`                                                   | Node/Pod affinities                                                                                                                                                                                                                                                                                                                             | `{}`                            |
-| `redis.external.host`                                                       | The hostname of external Redis                                                                                                                                                                                                                                                                                                                  | `192.168.0.2`                   |
-| `redis.external.port`                                                       | The port of external Redis                                                                                                                                                                                                                                                                                                                      | `6379`                          |
+| **Redis** |
+| `redis.type` | If external redis is used, set it to `external` | `internal` |
+| `redis.internal.image.repository` | Repository for redis image | `goharbor/redis-photon` |
+| `redis.internal.image.tag` | Tag for redis image | `dev` |
+| `redis.internal.resources` | The [resources] to allocate for container | undefined |
+| `redis.internal.nodeSelector` | Node labels for pod assignment | `{}` |
+| `redis.internal.tolerations` | Tolerations for pod assignment | `[]` |
+| `redis.internal.affinity` | Node/Pod affinities | `{}` |
+| `redis.external.addr` | The addr of external Redis: <host_redis>:<port_redis>. When using sentinel, it should be <host_sentinel1>:<port_sentinel1>,<host_sentinel2>:<port_sentinel2>,<host_sentinel3>:<port_sentinel3> | `192.168.0.2:6379` |
+| `redis.external.sentinelMasterSet` | The name of the set of Redis instances to monitor | |
 | `redis.external.coreDatabaseIndex` | The database index for core | `0` |
 | `redis.external.jobserviceDatabaseIndex` | The database index for jobservice | `1` |
 | `redis.external.registryDatabaseIndex` | The database index for registry | `2` |
 | `redis.external.chartmuseumDatabaseIndex` | The database index for chartmuseum | `3` |
 | `redis.external.clairAdapterIndex` | The database index for clair adapter | `4` |
-| `redis.external.password`                                                   | The password of external Redis                                                                                                                                                                                                                                                                                                                  |                                 |
-| `redis.podAnnotations`                                                      | Annotations to add to the redis pod                                                                                                                                                                                                                                                                                                             | `{}`                            |
+| `redis.external.trivyAdapterIndex` | The database index for trivy adapter | `5` |
+| `redis.external.password` | The password of external Redis | |
+| `redis.podAnnotations` | Annotations to add to the redis pod | `{}` |
 
 [resources]: https://kubernetes.io/docs/concepts/configuration/manage-compute-resources-container/
 [trivy]: https://github.com/aquasecurity/trivy
